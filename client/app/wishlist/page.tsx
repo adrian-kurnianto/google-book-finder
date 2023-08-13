@@ -36,7 +36,7 @@ export default function Wishlist() {
         <div className="mt-10 flex flex-wrap gap-10 justify-center w-full">
           {data.data.map((item: any) => {
             return (
-              <div className="lg:w-1/6 w-full shadow-lg">
+              <div key={item.id} className="lg:w-1/6 w-full shadow-lg">
                 <div className="relative m-0 shadow-lg  bg-white ">
                   <div className="">
                     <div className="w-full h-64 relative">
