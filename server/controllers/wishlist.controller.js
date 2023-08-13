@@ -23,12 +23,21 @@ class WishlistController {
 
   static async postWishlist(req, res, next) {
     const { id, thumbnail, rating, author, title } = req.body
-    console.log(req.body)
+
     try {
+      let newAuthor 
+
       if (!id || !thumbnail || !rating || !author || !title) {
         throw { name: 'required' }
       }
-      const newAuthor = author.join(',')
+
+
+      if(Array.isArray(author)) {
+        newAuthor = author.join(',') 
+      } else {
+        newAuthor = author
+      }
+      
 
       const books = await Wishlist.findOne().where({ id })
 

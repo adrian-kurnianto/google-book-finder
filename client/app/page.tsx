@@ -1,113 +1,176 @@
-import Image from 'next/image'
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import EmptyState from "./components/emptyState";
+import { fetchBooks } from "./api/books.api";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import * as loadingImage from "@/public/loading-svgrepo-com.svg";
+import ReactStars from "react-stars";
+import { addToWishlist } from "./api/wishlist.api";
+import { BookType } from "./types";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Home() {
+  const [error, setError] = useState(false);
+  const [search, setSearch] = useState("");
+  const { data, isFetching, refetch } = useQuery({
+    queryKey: ["books"],
+    queryFn: () => fetchBooks(search),
+    enabled: false,
+  });
+
+  const notifySuccess = () => toast.success("Added to Wishlist");
+  const notifyError = () => toast.error("books already in wishlist")
+
+  const handleSubmit = async () => {
+    if (!search) {
+      setError(true);
+      setTimeout(() => {
+        setError(false);
+      }, 3000);
+      return;
+    }
+
+    await refetch();
+  };
+
+  const { mutate } = useMutation(
+    ({ id, title, author, rating, thumbnail }: BookType) =>
+      addToWishlist({
+        id,
+        title,
+        author,
+        rating: rating.toString(),
+        thumbnail,
+      }),
+    {
+      onError: (err:any) => {
+        if(err.response.data.message.toLowerCase() == 'item already in wishlist') {
+          notifyError()
+        }
+      },
+      onSuccess: () =>{
+        notifySuccess()
+      }
+    }
+  );
+
+  
+
+  const handleToWishlist = (data: BookType) => {
+    mutate(data);
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="w-full px-4 pb-20 sm:px-2">
+      <h1 className="text-center lg:text-8xl md:text-6xl text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-blue-600 mt-10">
+        BOOK FINDER
+      </h1>
+      <h2 className="text-center lg:text-3xl md:text-2xl text-lg font-bold mt-3">
+        The right place for you to find a book
+      </h2>
+      <div className="flex justify-center w-full">
+        <div className="relative mt-10">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-2">
+            <button
+              type="submit"
+              className="p-1 focus:outline-none focus:shadow-outline"
+            >
+              <svg
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                className="w-6 h-6"
+              >
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </button>
+          </span>
+
+          <input
+            type="text"
+            name="q"
+            className="py-2 lg:w-72 md:w-72 w-4/6 text-sm text-gray-800 rounded-md pl-10 focus:outline-none border border-2 border-gray-400 focus:border-gray-800 rounded-xl"
+            placeholder="Search books"
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button
+            onClick={handleSubmit}
+            className="bg-blue-500 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-xl ml-3"
           >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+            Search
+          </button>
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+      {error && (
+        <div className="text-md text-center w-full  font-bold mt-5 text-red-400">
+          <span>Type something to search!!</span>
+        </div>
+      )}
+      {!isFetching && !data && <EmptyState />}
+      {isFetching && (
+        <div className="w-full flex justify-center mt-36">
+          <Image
+            src={loadingImage}
+            width={100}
+            height={100}
+            alt={""}
+            className="animate-spin"
+          />
+        </div>
+      )}
+      {data && !isFetching && (
+        <div className="mt-10 flex flex-wrap gap-10 justify-center w-full">
+          {data.data.map((item: any) => {
+            return (
+              <div className="lg:w-1/6 w-full shadow-lg">
+                <div className="relative m-0 shadow-lg  bg-white ">
+                  <div className="">
+                    <div className="w-full h-64 relative">
+                      <Image
+                        alt=""
+                        src={item.thumbnail}
+                        layout="fill"
+                        objectFit="contain"
+                      />
+                    </div>
+                  </div>
+                  <div className="card-block relative">
+                    <div className="p-6 h-64 flex flex-col justify-between">
+                      <h4 className="text-md mb-3 line-clamp-2 font-bold text-center">
+                        {item.title}
+                      </h4>
+                      <div>
+                        <div className="text-sm text-grey block mt-6 flex">
+                          <p>Authors: {item.author} </p>
+                        </div>
+                        <ReactStars
+                          count={5}
+                          edit={false}
+                          size={24}
+                          value={item.rating}
+                          color2={"#ffd700"}
+                        />
+                        <button
+                          onClick={() => handleToWishlist(item)}
+                          className="bg-blue-500 hover:bg-blue-800 text-white font-bold rounded-lg text-lg py-2 w-full"
+                        >
+                          + add to wishlist
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <Toaster />
+    </div>
+  );
 }
