@@ -2,19 +2,12 @@ const Wishlist = require('../schema/wishlist')
 
 class WishlistController {
   static async getWishlist(req, res) {
-    const { page, limit } = req.query
     try {
-      const wishlist = await Wishlist.find()
-        .limit(limit * 1)
-        .skip((page - 1) * limit)
+      const data = await Wishlist.find()
         .sort({ createdAt: -1 })
 
-      const count = await Wishlist.count()
-
       res.status(200).json({
-        currentPage: page,
-        totalData: count,
-        wishlist
+        data
       })
     } catch (err) {
       next(err)
